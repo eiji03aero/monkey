@@ -12,6 +12,12 @@ type Lexer struct {
 	ch           byte // current char under examination
 }
 
+func New(input string) *Lexer {
+	l := &Lexer{input: input}
+	l.readChar()
+	return l
+}
+
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
@@ -89,12 +95,6 @@ func (l *Lexer) skipWhiteSpace() {
 
 func newToken(tokenType token.TokenType, ch byte) token.Token {
 	return token.Token{Type: tokenType, Literal: string(ch)}
-}
-
-func New(input string) *Lexer {
-	l := &Lexer{input: input}
-	l.readChar()
-	return l
 }
 
 func (l *Lexer) readChar() {
