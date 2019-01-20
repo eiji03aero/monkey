@@ -9,15 +9,16 @@ import (
 
 const StackSize = 2048
 
+var True = &object.Boolean{Value: true}
+var False = &object.Boolean{Value: false}
+var Null = &object.Null{}
+
 type VM struct {
 	constants    []object.Object
 	instructions code.Instructions
 	stack        []object.Object
 	sp           int
 }
-
-var True = &object.Boolean{Value: true}
-var False = &object.Boolean{Value: false}
 
 func New(bytecode *compiler.Bytecode) *VM {
 	return &VM{
@@ -57,6 +58,12 @@ func (vm *VM) Run() error {
 				return err
 			}
 
+		case code.OpNull:
+			err := vm.push(Null)
+			if err != nil {
+				return err
+			}
+
 		case code.OpAdd, code.OpSub, code.OpMul, code.OpDiv:
 			err := vm.executeBinaryOperation(op)
 			if err != nil {
@@ -79,6 +86,19 @@ func (vm *VM) Run() error {
 			err := vm.executeMinusOperator()
 			if err != nil {
 				return err
+			}
+
+		case code.OpJump:
+			pos := int(code.ReadUint16(vm.instructions[ip+1:]))
+			ip = pos - 1
+
+		case code.OpJumpNotTruthy:
+			pos := int(code.ReadUint16(vm.instructions[ip+1:]))
+			ip += 2
+
+			condition := vm.pop()
+			if !isTruthy(condition) {
+				ip = pos - 1
 			}
 		}
 	}
@@ -177,7 +197,7 @@ func (vm *VM) executeIntegerComparison(
 	case code.OpNotEqual:
 		return vm.push(nativeBoolToBooleanObject(rightValue != leftValue))
 	case code.OpGreaterThan:
-		return vm.push(nativeBoolToBooleanObject(rightValue > leftValue))
+		return vm.push(nativeBoolToBooleanObject(leftValue > rightValue))
 	default:
 		return fmt.Errorf("unknown operator: %d", op)
 	}
@@ -198,6 +218,8 @@ func (vm *VM) executeBangOperator() error {
 		return vm.push(False)
 	case False:
 		return vm.push(True)
+	case Null:
+		return vm.push(True)
 	default:
 		return vm.push(False)
 	}
@@ -212,4 +234,17 @@ func (vm *VM) executeMinusOperator() error {
 
 	value := operand.(*object.Integer).Value
 	return vm.push(&object.Integer{Value: -value})
+}
+
+func isTruthy(obj object.Object) bool {
+	switch obj := obj.(type) {
+	case *object.Boolean:
+		return obj.Value
+
+	case *object.Null:
+		return false
+
+	default:
+		return true
+	}
 }
