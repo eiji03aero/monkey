@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/eiji03aero/monkey/ast"
+	"github.com/eiji03aero/monkey/code"
 	"hash/fnv"
 	"strings"
 )
@@ -12,16 +13,17 @@ type ObjectType string
 type BuiltinFunction func(args ...Object) Object
 
 const (
-	INTEGER_OBJ      = "INTEGER"
-	STRING_OBJ       = "STRING"
-	BOOLEAN_OBJ      = "BOOLEAN"
-	NULL_OBJ         = "NULL"
-	RETURN_VALUE_OBJ = "RETURN_VALUE"
-	ERROR_OBJ        = "ERROR"
-	FUNCTION_OBJ     = "FUNCTION"
-	BUILTIN_OBJ      = "BUILTIN"
-	ARRAY_OBJ        = "ARRAY"
-	HASH_OBJ         = "HASH"
+	INTEGER_OBJ           = "INTEGER"
+	STRING_OBJ            = "STRING"
+	BOOLEAN_OBJ           = "BOOLEAN"
+	NULL_OBJ              = "NULL"
+	RETURN_VALUE_OBJ      = "RETURN_VALUE"
+	ERROR_OBJ             = "ERROR"
+	FUNCTION_OBJ          = "FUNCTION"
+	BUILTIN_OBJ           = "BUILTIN"
+	ARRAY_OBJ             = "ARRAY"
+	HASH_OBJ              = "HASH"
+	COMPILED_FUNCTION_OBJ = "COMPILED_FUNCTION_OBJ"
 )
 
 type Object interface {
@@ -108,6 +110,16 @@ type Builtin struct {
 
 func (b *Builtin) Type() ObjectType { return BUILTIN_OBJ }
 func (b *Builtin) Inspect() string  { return "builtin function" }
+
+// CompiledFunction
+type CompiledFunction struct {
+	Instructions  code.Instructions
+	NumLocals     int
+	NumParameters int
+}
+
+func (cf *CompiledFunction) Type() ObjectType { return COMPILED_FUNCTION_OBJ }
+func (cf *CompiledFunction) Inspect() string  { return fmt.Sprintf("CompiledFunction[%p]", cf) }
 
 // Array
 type Array struct {
